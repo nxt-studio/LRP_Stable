@@ -66,7 +66,7 @@ window.addEventListener('message', function(event) {
                                 Modelhorse = $(this).attr('id');                       
                                 $(this).addClass('selected');
 
-                                $.post('http://lrp_stable/loadHorse', JSON.stringify({ horseModel: $(this).attr('id') }));
+                                $.post('http://LRP_Stable/loadHorse', JSON.stringify({ horseModel: $(this).attr('id') }));
                             });                       
                             
                         }, function() {});
@@ -144,7 +144,7 @@ window.addEventListener('message', function(event) {
                     HorseSEID = $(HorseID).attr('id');             
                     $(HorseID).addClass('selected');
 
-                    $.post('http://lrp_stable/loadMyHorse', JSON.stringify({ IdHorse: HorseID, horseModel: HorseIdModel, HorseComp: componentsh}));
+                    $.post('http://LRP_Stable/loadMyHorse', JSON.stringify({ IdHorse: HorseID, horseModel: HorseIdModel, HorseComp: componentsh}));
                 });                         
             }, function() {});
         }
@@ -153,7 +153,7 @@ window.addEventListener('message', function(event) {
 });
 
 function confirm(){
-    $.post('http://lrp_stable/CloseStable')
+    $.post('http://LRP_Stable/CloseStable')
 
     $('#button-customization').addClass("disabled");
     $('#page_myhorses .scroll-container .collapsible').html('');
@@ -194,7 +194,7 @@ $(".button-right").on('click', function() {
     var text = titleElement.text();
   //  var component = text.split(' ')[0];
     titleElement.text(component + ' ' + nValue + '/' + max);
-    $.post('http://lrp_stable/'+component, JSON.stringify({ id: nValue }));
+    $.post('http://LRP_Stable/'+component, JSON.stringify({ id: nValue }));
 });
 
 $(".button-left").on('click', function() {
@@ -219,7 +219,7 @@ $(".button-left").on('click', function() {
     var text = titleElement.text();
   //  var component = text.split(' ')[0];
     titleElement.text(component + ' ' + nValue + '/' + max);
-    $.post('http://lrp_stable/'+component, JSON.stringify({ id: nValue }));
+    $.post('http://LRP_Stable/'+component, JSON.stringify({ id: nValue }));
 });
 
 $(".input-number").on("change paste keyup", function() {
@@ -249,18 +249,18 @@ $(".input-number").on("change paste keyup", function() {
 
 function buyHorse(Modelhor, price, isGold) {    
     if (isGold) {        
-        $.post('http://lrp_stable/BuyHorse', JSON.stringify({ ModelH: Modelhor, Gold: price, IsGold: isGold }));
+        $.post('http://LRP_Stable/BuyHorse', JSON.stringify({ ModelH: Modelhor, Gold: price, IsGold: isGold }));
     } else {
-        $.post('http://lrp_stable/BuyHorse', JSON.stringify({ ModelH: Modelhor, Dollar: price, IsGold: isGold }));    
+        $.post('http://LRP_Stable/BuyHorse', JSON.stringify({ ModelH: Modelhor, Dollar: price, IsGold: isGold }));    
     }    
 }
 
 
 function SelectHorse(IdHorse) {    
-    $.post('http://lrp_stable/selectHorse', JSON.stringify({ horseID: IdHorse }))    
+    $.post('http://LRP_Stable/selectHorse', JSON.stringify({ horseID: IdHorse }))    
 }
 
 
 function SellHorse(IdHorse) {    
-    $.post('http://lrp_stable/sellHorse', JSON.stringify({ horseID: IdHorse }))    
+    $.post('http://LRP_Stable/sellHorse', JSON.stringify({ horseID: IdHorse }))    
 }
