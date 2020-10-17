@@ -1,7 +1,16 @@
+# RedEM:RP Stable 1.0
 
-# LRP_Stable
+**Version:**  1.0.0
 
-This is my server's stable, if you want to use it in REDMRP you need to convert it.
-Make a pull request with the conversion
+**GitHub:**  [https://github.com/Luminous-Roleplay/LRP_Stable](https://github.com/Luminous-Roleplay/LRP_Stable/)
 
-![Stable](https://media.discordapp.net/attachments/648268616214511655/764135491619651584/unknown.png?width=1162&height=677)
+You can buy & customize horses
+You can name your horses
+You can Sell your horses in the stables menu
+You can buy for Dollar or Gold
+
+## Requirements
+[RedEM:RP ](https://github.com/RedEM-RP/redem_roleplay)
+[RedEM:RP Identity ](https://github.com/RedEM-RP/redemrp_identity/)
+[RedEM:RP Respawn ](https://github.com/RedEM-RP/redemrp_respawn/)
+[pNotify ](https://github.com/Nick78111/pNotify)
