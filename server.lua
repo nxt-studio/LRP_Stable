@@ -1,60 +1,53 @@
-local Tunnel = module("_core", "lib/Tunnel")
-local Proxy = module("_core", "lib/Proxy")
+local SelectedHorseId = {}
 
-API = Proxy.getInterface("API")
-cAPI = Tunnel.getInterface("API")
 
 RegisterNetEvent("VP:STABLE:UpdateHorseComponents")
 AddEventHandler(
     "VP:STABLE:UpdateHorseComponents",
     function(components, idhorse)
         local _source = source
-        local User = API.getUserFromSource(_source)
-        local Character = User:getCharacter()
 
-        User:setHorse(idhorse)
-        Character:setHorse(idhorse)
-
-        local Horse = Character:getHorse()
-
-        Horse:setComponents(components)
-        cAPI.setHorseComponents(_source, components)
+        local encodedComponents = json.encode(components)        
+        TriggerEvent('redemrp:getPlayerFromId', _source, function(user)
+            local identifier = user.getIdentifier()
+            local charid = user.getSessionVar("charid")
+   
+            MySQL.Async.execute("UPDATE horses SET `components`='".. encodedComponents .."' WHERE `identifier`=@identifier AND `id`=@id", {identifier = identifier, id = id}, function(done)
+                print('components changed')
+            end)
+        end)
     end
 )
+
+
 
 RegisterNetEvent("VP:STABLE:AskForMyHorses")
 AddEventHandler(
     "VP:STABLE:AskForMyHorses",
     function()
         local _source = source
+        local horseId = nil
+        local components = nil
+        
+        TriggerEvent('redemrp:getPlayerFromId', _source, function(user)
+            local identifier = user.getIdentifier()
+            local charid = user.getSessionVar("charid")
 
-        local User = API.getUserFromSource(_source)
-        local Character = User:getCharacter()
-
-        local horses = Character:getHorses() or {}
-
-        if #horses <= 0 then
-            return
-        end
-
-        local Horse = Character:getHorse()
-        local selectedHorseId
-        if Horse ~= nil then
-            selectedHorseId = Horse:getId()
-        end
-
-        for _, data in pairs(horses) do
-            if selectedHorseId ~= nil and data.id == selectedHorseId then
-                data.selected = true
-            end
-            data.charid = nil
-        end
-
-        -- for k,v in pairs(horses) do
-           -- print(k,v)
-        -- end        
-        TriggerClientEvent("VP:STABLE:ReceiveHorsesData", _source, horses)
-        -- TriggerClientEvent("VP:STABLE:callhorse", _source)
+            MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(horses)
+                if horses[1]then
+                    horseId = horses[1].id
+                else
+                    horseId = nil
+                end
+    
+                MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(components)
+                    if components[1] then
+                        components = components[1].components
+                    end
+                end)
+                TriggerClientEvent("VP:STABLE:ReceiveHorsesData", _source, horses)
+            end)      
+        end)    
     end
 )
 
@@ -62,76 +55,118 @@ RegisterNetEvent("VP:STABLE:BuyHorse")
 AddEventHandler(
     "VP:STABLE:BuyHorse",
     function(data, name)
-
         local _source = source
-        local User = API.getUserFromSource(_source)
-        local Character = User:getCharacter()
-        local Horses = Character:getHorses()
-        local Inventory = Character:getInventory()
+        local Horses = {}
 
-        if #Horses >= 1 then
-            TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Limite de estabulo alcançado!', 5000)
-            return
-        end
+        TriggerEvent('redemrp:getPlayerFromId', _source, function(user)
+            local identifier = user.getIdentifier()
+            local charid = user.getSessionVar("charid")
+            MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(horses)
+                Horses = horses
+            end) 
 
-        if data.IsGold then
-            if Inventory:getItemAmount("gold") < data.Gold*100 then
-                TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Gold insuficiente!', 5000)
+            if #Horses >= 3 then
+                print('Stable limit')
+                --TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Limite de estabulo alcançado!', 5000)
                 return
             end
-            Inventory:removeItem(-1, "gold", data.Gold*100)
-        else
-            if Inventory:getItemAmount("money") < data.Dollar*100 then
-                TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Dollar insuficiente!', 5000)
-                return
-            end
-            Inventory:removeItem(-1, "money", data.Dollar*100)
-        end
 
-        Character:createHorse(data.ModelH, tostring(name))
+            if data.IsGold then
+                if user.getGold() < data.Gold then
+                    --TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Gold insuficiente!', 5000)
+                    print("You not have gold")
+                    return
+                end
+                user.removeGold(tonumber(data.Gold))
+            else
+                if user.getMoney() < data.Dollar then
+                    --TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Dollar insuficiente!', 5000)
+                    print("You not have Money")
+                    return
+                end
+                user.removeMoney(tonumber(data.Dollar))
+            end
+
+            MySQL.Async.execute('INSERT INTO horses (`identifier`, `charid`, `name`, `model`) VALUES (@identifier, @charid, @name, @model);',
+            {
+                identifier = identifier,
+                charid = charid,
+                name = tostring(name),
+                model = data.ModelH
+            }, function(rowsChanged)
+            end)
+
+        end)
     end
 )
+
+
 
 RegisterNetEvent("VP:STABLE:SelectHorseWithId")
 AddEventHandler(
     "VP:STABLE:SelectHorseWithId",
     function(id)
         local _source = source
-        local User = API.getUserFromSource(_source)
-        local Character = User:getCharacter()
+        TriggerEvent('redemrp:getPlayerFromId', _source, function(user)
+            local identifier = user.getIdentifier()
+            local charid = user.getSessionVar("charid")
 
-        User:setHorse(id)
+            MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(horse)
+                if horse.id == id then            
+                    MySQL.Async.execute("UPDATE horses SET `selected`='1' WHERE `identifier`=@identifier AND `id`=@id", {identifier = identifier, id = id}, function(done)  
+                        print('Horse Selected')
+                        TriggerClientEvent("VP:HORSE:SetHorseInfo", _source, horse.model, horse.name, horse.components)
+                        -- TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Horse selected')
+                    end)                    
+                else
+                    MySQL.Async.execute("UPDATE horses SET `selected`='0' WHERE `identifier`=@identifier AND `id`=@id", {identifier = identifier, id = id}, function(done)
+                
+                    end)
+                end
 
-        -- Character:setHorse(id)
-        
-        local Horse = Character:getHorse()
-        
-        TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Cavalo selecionado', 5000)
+               
+           
+            end)
+        end)        
     end
 )
+
 
 
 RegisterNetEvent("VP:STABLE:SellHorseWithId")
 AddEventHandler(
     "VP:STABLE:SellHorseWithId",
     function(id)
+        local modelHorse = nil
         local _source = source
-        local User = API.getUserFromSource(_source)
-        local Character = User:getCharacter()
-        local Inventory = Character:getInventory()     
-        local Horse = Character:getHorse()
+        TriggerEvent('redemrp:getPlayerFromId', _source, function(user)
+            local identifier = user.getIdentifier()
+            local charid = user.getSessionVar("charid")
 
-        if Horse == nil then            
-            TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Você já vendeu este cavalo.', 5000)
-            return
-        end
+            MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(horses)
+                if horses.id == id then             
+                    modelHorse = horses.model
+                    MySQL.Async.fetchAll('DELETE FROM outfits WHERE `identifier`=@identifier AND `charid`=@charid AND`id`=@id;', {identifier = identifier, charid = charid,  id = id}, function(result)
+                    end)
 
-        TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Cavalo vendido com sucesso.', 5000)  
+                    for i, table in pairs(Config.Horses) do
+                        for modelH, horseData in pairs(table) do
+                            if modelH == horses.model then
+                                print(tonumber(horseData[3]*0.6))                                
+                            --    user.addMoney(tonumber(horseData[3]*0.6)
+                                print('Horse Sold')
+                            end
+                        end
+                    end                  
 
-        Character:removeHorse(tonumber(id))
-        Character:deleteHorse(tonumber(id))
-                
-        Inventory:addItem("money", 1000)
+
+                else
+                    print('error')
+                    return
+                end
+                --    TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Horse sold')
+            end)
+        end)
     end
 )
 

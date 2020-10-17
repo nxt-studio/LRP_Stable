@@ -12,27 +12,29 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 
--- Copiando estrutura do banco de dados para redm
-CREATE DATABASE IF NOT EXISTS `redm` /*!40100 DEFAULT CHARACTER SET latin1 */;
-USE `redm`;
+-- Copiando estrutura do banco de dados para redemrp
+CREATE DATABASE IF NOT EXISTS `redemrp` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+USE `redemrp`;
 
--- Copiando estrutura para tabela redm.horses
+-- Copiando estrutura para tabela redemrp.horses
 CREATE TABLE IF NOT EXISTS `horses` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `identifier` varchar(40) NOT NULL,
   `charid` int(11) NOT NULL,
+  `selected` int(11) NOT NULL DEFAULT 0,
   `model` varchar(50) NOT NULL,
   `name` varchar(50) NOT NULL,
   `components` text NOT NULL DEFAULT '{}',
   PRIMARY KEY (`id`),
-  KEY `FK_horses_characters` (`charid`),
-  CONSTRAINT `FK_horses_characters` FOREIGN KEY (`charid`) REFERENCES `characters` (`charid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
+  KEY `FK_horses_characters` (`charid`)
+);
 
--- Copiando dados para a tabela redm.horses: ~2 rows (aproximadamente)
+-- Copiando dados para a tabela redemrp.horses: ~3 rows (aproximadamente)
 /*!40000 ALTER TABLE `horses` DISABLE KEYS */;
-INSERT IGNORE INTO `horses` (`id`, `charid`, `model`, `name`, `components`) VALUES
-	(15, 84, 'A_C_Horse_AmericanStandardbred_Buckskin', 'CavaloRuim', '["0x106961A8","0x3278996D","0x67AF7302","0x1D4EDB88","0x130E341A","0x12DBBBAF","0x333CDC06","0x12F0DF9F"]'),
-	(16, 84, 'A_C_HORSE_MORGAN_FLAXENCHESTNUT', 'CavaloBom', '["0x14168240","0x19C5E80C","0x587DD49F","0x20AA8620","0x14098229","0x1BB5EAA1","0x2A28C8BE","0x12F0DF9F"]');
+INSERT IGNORE INTO `horses` (`id`, `identifier`, `charid`, `selected`, `model`, `name`, `components`) VALUES
+	(13, 'steam:11000010596ee06', 1, 0, 'A_C_Horse_KentuckySaddle_Grey', 'Nome', '{}'),
+	(25, 'steam:11000010596ee06', 1, 0, 'A_C_Horse_Belgian_MealyChestnut', 'kkk', '{}'),
+	(26, 'steam:11000010596ee06', 1, 1, 'A_C_Horse_Andalusian_DarkBay', 'kk', '{}');
 /*!40000 ALTER TABLE `horses` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

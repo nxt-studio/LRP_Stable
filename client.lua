@@ -1,9 +1,3 @@
-local Tunnel = module("_core", "lib/Tunnel")
-local Proxy = module("_core", "lib/Proxy")
-
-cAPI = Proxy.getInterface("API")
-API = Tunnel.getInterface("API")
-
 cam = nil
 hided = false
 spawnedCamera = nil
@@ -13,6 +7,7 @@ sex = nil
 zoom = 4.0
 offset = 0.2
 DeleteeEntity = true
+
 local InterP = true
 local adding = true
 
@@ -468,45 +463,7 @@ local alreadySentShopData = false
 function getShopData()
     alreadySentShopData = true
 
-    local ret = {
-        {
-            name = "Cavalos de Equitação",
-            ["A_C_HORSEMULE_01"] = {"Mula", 5, 17},
-            ["A_C_Horse_KentuckySaddle_Grey"] = {"Kentucky Saddle (Cinza)", 20, 50},
-            ["A_C_Horse_Morgan_Palomino"] = {"Morgan", 21, 55},
-
-        },
-        {
-            name = "Cavalos de Corrida",
-            ["A_C_Horse_Thoroughbred_DappleGrey"] = {"Thoroughbred", 47, 130},
-            ["A_C_Horse_Nokota_ReverseDappleRoan"] = {"Nokota, o ágil.", 135, 450},
-            ["A_C_Horse_AmericanStandardbred_Buckskin"] = {"Standardbred Americano", 47, 130},
-
-        },
-        {
-            name = "Cavalos de Guerra",
-            ["A_C_Horse_Andalusian_DarkBay"] = {"Andalusian (Preto Cintilante)", 50, 140},
-            ["A_C_Horse_Andalusian_Perlino"] = {"Andalusian (Celeste)", 50, 140},
-        },
-        {
-            name = "Cavalos de Carga",
-            ["A_C_Horse_AmericanPaint_Overo"] = {"American Paint (Cor-de-pinto)", 47, 130},
-            ["A_C_Horse_AmericanPaint_Tobiano"] = {"American Paint (Tobiano)", 50, 140},
-            ["A_C_Horse_Appaloosa_Blanket"] = {"Appaloosa", 73, 200},    
-        },
-        {
-            name = "Cavalos Frontline (Tanques)",
-            ["A_C_Horse_Belgian_BlondChestnut"] = {"Belga (Castanho-Claro)", 30, 120},
-            ["A_C_Horse_Belgian_MealyChestnut"] = {"Belga (Loiro)", 30, 120},
-            ["A_C_Horse_Shire_LightGrey"] = {"Shire (Branco Acizentado)", 35, 130},
-            ["A_C_Horse_SuffolkPunch_RedChestnut"] = {"Suffolk Punch (Castanho Avermelhado)", 55, 150},
-        },
-        {
-            name = "Cavalos de Prestígio",
-            ["A_C_Horse_Turkoman_Gold"] = {"Turkoman (Dourado Fulgente)", 470, 950},
-
-        } 
-    }
+    local ret = Config.Horses
 
     return ret
 end
@@ -614,24 +571,32 @@ RegisterNUICallback(
 RegisterNUICallback(
     "BuyHorse",
     function(data)
-        local HorseName = cAPI.prompt("Nome do Cavalo:", "")
-        
-        if HorseName == "" then
-            return
-        end
-        SetNuiFocus(true, true)
-
-        TriggerServerEvent('VP:STABLE:BuyHorse', data, HorseName)
+        SetHorseName(data)
     end
 )
 
-
+function SetHorseName(data)
+	local HorseName = ""
+    
+	Citizen.CreateThread(function()
+		AddTextEntry('FMMC_MPM_NA', "Name your horse:")
+		DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "Nome", "", "", "", 30)
+		while (UpdateOnscreenKeyboard() == 0) do
+			DisableAllControlActions(0);
+			Citizen.Wait(0);
+		end
+		if (GetOnscreenKeyboardResult()) then
+            HorseName = GetOnscreenKeyboardResult()
+            TriggerServerEvent('VP:STABLE:BuyHorse', data, HorseName)
+		end	
+    end)
+    
+end
 
 RegisterNUICallback(
     "CloseStable",
     function()
         SetNuiFocus(false, false)
-
         SendNUIMessage(
             {
                 action = "hide"
@@ -654,7 +619,6 @@ RegisterNUICallback(
         CloseStable()
     end
 )
-
 
 function CloseStable()
         local dados = {
@@ -684,7 +648,6 @@ function CloseStable()
        
 end
 
-
 Citizen.CreateThread(
     function()
        while true do
@@ -705,6 +668,192 @@ Citizen.CreateThread(
        end
     end
 )
+
+local playerHorse = 0
+
+local horseModel
+local horseName
+local horseComponents = {}
+
+local initializing = false
+
+function SetHorseInfo(horse_model, horse_name, horse_components)
+    horseModel = horse_model
+    horseName = horse_name
+    horseComponents = horse_components
+end
+
+function NativeSetPedComponentEnabled(ped, component)
+    Citizen.InvokeNative(0xD3A7B003ED343FD9, ped, component, true, true, true)
+end
+
+RegisterNetEvent("VP:HORSE:SetHorseInfo")
+AddEventHandler("VP:HORSE:SetHorseInfo", SetHorseInfo)
+
+function InitiateHorse(atCoords)
+    if initializing then
+        return
+    end
+
+    initializing = true
+
+    if horseModel == nil and horseName == nil then
+        TriggerServerEvent("VP:HORSE:RequestMyHorseInfo")
+
+        local timeoutatgametimer = GetGameTimer() + (3 * 1000)
+
+        while horseModel == nil and timeoutatgametimer > GetGameTimer() do
+            Citizen.Wait(0)
+        end
+
+        if horseModel == nil and horseName == nil then
+            horseModel = "A_C_Horse_Turkoman_Gold"
+            horseName = "Pangaré"
+            print('you not have horse')
+        end
+    end
+
+    if playerHorse ~= 0 then
+        DeleteEntity(playerHorse)
+        playerHorse = 0
+    end
+
+    local ped = PlayerPedId()
+    local pCoords = GetEntityCoords(ped)
+
+    local modelHash = GetHashKey(horseModel)
+
+    if not HasModelLoaded(modelHash) then
+        RequestModel(modelHash)
+        while not HasModelLoaded(modelHash) do
+            Citizen.Wait(10)
+        end
+    end
+
+    local spawnPosition
+
+    if atCoords == nil then
+        local x, y, z = table.unpack(pCoords)
+        local bool, nodePosition = GetClosestVehicleNode(x, y, z, 1, 3.0, 0.0)
+
+        local index = 0
+        while index <= 25 do
+            local _bool, _nodePosition = GetNthClosestVehicleNode(x, y, z, index, 1, 3.0, 2.5)
+            if _bool == true or _bool == 1 then
+                bool = _bool
+                nodePosition = _nodePosition
+                index = index + 3
+            else
+                break
+            end
+        end
+
+        spawnPosition = nodePosition
+    else
+        spawnPosition = atCoords
+    end
+
+    if spawnPosition == nil then
+        initializing = false
+        return
+    end
+
+    local entity = CreatePed(modelHash, spawnPosition, GetEntityHeading(ped), true, true)
+    SetModelAsNoLongerNeeded(modelHash)
+
+    Citizen.InvokeNative(0x9587913B9E772D29, entity, 0)
+    Citizen.InvokeNative(0x4DB9D03AC4E1FA84, entity, -1, -1, 0)
+
+    Citizen.InvokeNative(0xBCC76708E5677E1D9, entity, 0)
+    Citizen.InvokeNative(0xB8B6430EAD2D2437, entity, GetHashKey("PLAYER_HORSE"))
+    Citizen.InvokeNative(0xFD6943B6DF77E449, entity, false)
+
+    SetPedConfigFlag(entity, 324, true)
+    SetPedConfigFlag(entity, 211, true)
+    SetPedConfigFlag(entity, 208, true)
+    SetPedConfigFlag(entity, 209, true)
+    SetPedConfigFlag(entity, 400, true)
+    SetPedConfigFlag(entity, 297, true)
+    SetPedConfigFlag(entity, 136, false)
+    SetPedConfigFlag(entity, 312, false)
+    SetPedConfigFlag(entity, 113, false)
+    SetPedConfigFlag(entity, 301, false)
+    SetPedConfigFlag(entity, 277, true)
+    SetPedConfigFlag(entity, 319, true)
+    SetPedConfigFlag(entity, 6, true)
+
+    SetAnimalTuningBoolParam(entity, 25, false)
+    SetAnimalTuningBoolParam(entity, 24, false)
+
+    TaskAnimalUnalerted(entity, -1, false, 0, 0)
+    Citizen.InvokeNative(0x283978A15512B2FE, entity, true)
+
+    playerHorse = entity
+
+    if horseModel == "A_C_Horse_MP_Mangy_Backup" then
+        NativeSetPedComponentEnabled(entity, 0x106961A8) --sela
+        NativeSetPedComponentEnabled(entity, 0x508B80B9) --blanket
+    end
+
+    Citizen.InvokeNative(0x283978A15512B2FE, entity, true)
+
+    -- SetVehicleHasBeenOwnedByPlayer(playerHorse, true)
+    SetPedNameDebug(entity, horseName)
+    SetPedPromptName(entity, horseName)
+
+    CreatePrompts(PromptGetGroupIdForTargetEntity(entity))
+
+    if horseComponents ~= nil then
+        for _, componentHash in pairs(horseComponents) do
+            NativeSetPedComponentEnabled(entity, tonumber(componentHash))
+        end
+    end
+
+    TaskGoToEntity(entity, ped, -1, 7.2, 2.0, 0, 0)
+
+    SetPedConfigFlag(entity, 297, true) -- Enable_Horse_Leadin
+
+    initializing = false
+end
+
+function WhistleHorse()
+    if playerHorse ~= 0 then
+        if GetScriptTaskStatus(playerHorse, 0x4924437D, 0) ~= 0 then
+            TaskGoToEntity(playerHorse, PlayerPedId(), -1, 7.2, 2.0, 0, 0)
+        end   
+    else
+        print('')
+    end
+end
+
+function fleeHorse(playerHorse)
+    TaskAnimalFlee(playerHorse, PlayerPedId(), -1)
+    Wait(5000)
+    DeleteEntity(playerHorse)    
+    playerHorse = 0
+end
+
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(1)
+        if Citizen.InvokeNative(0x91AEF906BCA88877, 0, 0x24978A28) then -- Control =  H
+			WhistleHorse()
+			Citizen.Wait(10000) --Flood Protection? i think yes zoot
+        end
+		
+        if Citizen.InvokeNative(0x91AEF906BCA88877, 0, 0x4216AF06) then -- Control = Horse Flee            
+         --   local horseCheck = Citizen.InvokeNative(0x7912F7FC4F6264B6, PlayerPedId(), myHorse[4])            
+			if playerHorse ~= 0 then
+				fleeHorse(playerHorse)
+			end
+		end		
+    end    
+end)
+
+
+
+
+
 
 function interpCamera(cameraName, entity)
     for k, v in pairs(cameraUsing) do
@@ -737,3 +886,15 @@ function createCamera(entity)
     Wait(3900)
     DestroyCam(groundCam)
 end
+
+
+
+AddEventHandler(
+    "onResourceStop",
+    function(resourceName)
+        if GetCurrentResourceName() == resourceName then
+            DeleteEntity(playerHorse)
+            playerHorse = 0
+        end
+    end
+)
