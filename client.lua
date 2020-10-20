@@ -149,11 +149,11 @@ Citizen.CreateThread(
         for _, v in pairs(Config.Stables) do
             -- blip = N_0x554d9d53f696d002(1664425300, v.Pos.x, v.Pos.y, v.Pos.z)
             SetBlipSprite(blip, -145868367, 1)
-            Citizen.InvokeNative(0x9CB1A1623062F402, blip, "Estábulo")
+            Citizen.InvokeNative(0x9CB1A1623062F402, blip, "Stable")
             local prompt = PromptRegisterBegin()
             PromptSetActiveGroupThisFrame(promptGroup, varStringCasa)
             PromptSetControlAction(prompt, 0xE8342FF2)
-            PromptSetText(prompt, CreateVarString(10, "LITERAL_STRING", "Acessar Estábulo"))
+            PromptSetText(prompt, CreateVarString(10, "LITERAL_STRING", "Open Stable"))
             PromptSetStandardMode(prompt, true)
             PromptSetEnabled(prompt, 1)
             PromptSetVisible(prompt, 1)
@@ -417,7 +417,6 @@ end
 RegisterNUICallback(
     "selectHorse",
     function(data)
-        print(data.horseID)
         TriggerServerEvent("VP:STABLE:SelectHorseWithId", tonumber(data.horseID))
     end
 )
@@ -425,12 +424,24 @@ RegisterNUICallback(
 RegisterNUICallback(
     "sellHorse",
     function(data)
-        print(data.horseID)
         DeleteEntity(showroomHorse_entity)
         TriggerServerEvent("VP:STABLE:SellHorseWithId", tonumber(data.horseID))
         TriggerServerEvent("VP:STABLE:AskForMyHorses")
+        alreadySentShopData = false
+        Wait(300)
+
+        SendNUIMessage(
+            {
+                action = "show",
+                shopData = getShopData()
+            }
+        )
+        TriggerServerEvent("VP:STABLE:AskForMyHorses")
+
     end
 )
+
+
 
 RegisterNetEvent("VP:STABLE:ReceiveHorsesData")
 AddEventHandler(
@@ -548,6 +559,7 @@ RegisterNUICallback(
         Citizen.InvokeNative(0x58A850EAEE20FAA3, MyHorse_entity)
         NetworkSetEntityInvisibleToNetwork(MyHorse_entity, true)
         SetVehicleHasBeenOwnedByPlayer(MyHorse_entity, true)
+               
 
         local componentsHorse = json.decode(data.HorseComp)
 
@@ -567,20 +579,39 @@ RegisterNUICallback(
     end
 )
 
+RegisterNetEvent('VP:STABLE:UpdadeHOrseComponents')
+AddEventHandler('VP:STABLE:UpdadeHOrseComponents', function(horseEntity, components)
+    for _, value in pairs(components) do
+        NativeSetPedComponentEnabled(horseEntity, value)
+    end
+end)
 
 RegisterNUICallback(
     "BuyHorse",
     function(data)
         SetHorseName(data)
+
+        
     end
 )
 
 function SetHorseName(data)
-	local HorseName = ""
-    
+
+        
+    SetNuiFocus(false, false)
+    SendNUIMessage(
+        {
+            action = "hide"
+        }
+    )
+
+    Wait(200)
+   
+    local HorseName = ""
+
 	Citizen.CreateThread(function()
 		AddTextEntry('FMMC_MPM_NA', "Name your horse:")
-		DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "Nome", "", "", "", 30)
+		DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 30)
 		while (UpdateOnscreenKeyboard() == 0) do
 			DisableAllControlActions(0);
 			Citizen.Wait(0);
@@ -588,6 +619,19 @@ function SetHorseName(data)
 		if (GetOnscreenKeyboardResult()) then
             HorseName = GetOnscreenKeyboardResult()
             TriggerServerEvent('VP:STABLE:BuyHorse', data, HorseName)
+
+
+            SetNuiFocus(true, true)
+            SendNUIMessage(
+            {
+                action = "show",
+                shopData = getShopData()
+            }
+        )
+
+        Wait(1000)
+
+        TriggerServerEvent("VP:STABLE:AskForMyHorses") 
 		end	
     end)
     
@@ -642,7 +686,7 @@ function CloseStable()
         local DadosEncoded = json.encode(dados)
 
         if DadosEncoded ~= "[]" then            
-            TriggerServerEvent("VP:STABLE:UpdateHorseComponents", dados, IdMyHorse ) 
+            TriggerServerEvent("VP:STABLE:UpdateHorseComponents", dados, IdMyHorse, MyHorse_entity ) 
         end
 
        
@@ -669,7 +713,7 @@ Citizen.CreateThread(
     end
 )
 
-local playerHorse = 0
+local SpawnplayerHorse = 0
 
 local horseModel
 local horseName
@@ -707,15 +751,15 @@ function InitiateHorse(atCoords)
         end
 
         if horseModel == nil and horseName == nil then
-            horseModel = "A_C_Horse_Turkoman_Gold"
+            horseModel = "A_C_Horse_MP_Mangy_Backup"
             horseName = "Pangaré"
-            print('you not have horse')
+            horseComponents = nil
         end
     end
 
-    if playerHorse ~= 0 then
-        DeleteEntity(playerHorse)
-        playerHorse = 0
+    if SpawnplayerHorse ~= 0 then
+        DeleteEntity(SpawnplayerHorse)
+        SpawnplayerHorse = 0
     end
 
     local ped = PlayerPedId()
@@ -763,7 +807,7 @@ function InitiateHorse(atCoords)
 
     Citizen.InvokeNative(0x9587913B9E772D29, entity, 0)
     Citizen.InvokeNative(0x4DB9D03AC4E1FA84, entity, -1, -1, 0)
-
+    Citizen.InvokeNative(0x23f74c2fda6e7c61, -1230993421, entity)
     Citizen.InvokeNative(0xBCC76708E5677E1D9, entity, 0)
     Citizen.InvokeNative(0xB8B6430EAD2D2437, entity, GetHashKey("PLAYER_HORSE"))
     Citizen.InvokeNative(0xFD6943B6DF77E449, entity, false)
@@ -788,12 +832,7 @@ function InitiateHorse(atCoords)
     TaskAnimalUnalerted(entity, -1, false, 0, 0)
     Citizen.InvokeNative(0x283978A15512B2FE, entity, true)
 
-    playerHorse = entity
-
-    if horseModel == "A_C_Horse_MP_Mangy_Backup" then
-        NativeSetPedComponentEnabled(entity, 0x106961A8) --sela
-        NativeSetPedComponentEnabled(entity, 0x508B80B9) --blanket
-    end
+    SpawnplayerHorse = entity
 
     Citizen.InvokeNative(0x283978A15512B2FE, entity, true)
 
@@ -801,12 +840,17 @@ function InitiateHorse(atCoords)
     SetPedNameDebug(entity, horseName)
     SetPedPromptName(entity, horseName)
 
-    CreatePrompts(PromptGetGroupIdForTargetEntity(entity))
+    --CreatePrompts(PromptGetGroupIdForTargetEntity(entity))
 
     if horseComponents ~= nil then
-        for _, componentHash in pairs(horseComponents) do
+        for _, componentHash in pairs(json.decode(horseComponents)) do
             NativeSetPedComponentEnabled(entity, tonumber(componentHash))
         end
+    end
+
+    if horseModel == "A_C_Horse_MP_Mangy_Backup" then     
+        NativeSetPedComponentEnabled(entity, 0x106961A8) --sela
+        NativeSetPedComponentEnabled(entity, 0x508B80B9) --blanket
     end
 
     TaskGoToEntity(entity, ped, -1, 7.2, 2.0, 0, 0)
@@ -817,20 +861,32 @@ function InitiateHorse(atCoords)
 end
 
 function WhistleHorse()
-    if playerHorse ~= 0 then
-        if GetScriptTaskStatus(playerHorse, 0x4924437D, 0) ~= 0 then
-            TaskGoToEntity(playerHorse, PlayerPedId(), -1, 7.2, 2.0, 0, 0)
+    if SpawnplayerHorse ~= 0 then
+        if GetScriptTaskStatus(SpawnplayerHorse, 0x4924437D, 0) ~= 0 then
+            local pcoords = GetEntityCoords(PlayerPedId())
+            local hcoords = GetEntityCoords(SpawnplayerHorse)
+            local caldist = Vdist(pcoords.x, pcoords.y, pcoords.z, hcoords.x, hcoords.y, hcoords.z)
+            if caldist >= 100 then
+                DeleteEntity(SpawnplayerHorse)
+                Wait(1000)
+                SpawnplayerHorse = 0
+            else
+                TaskGoToEntity(SpawnplayerHorse, PlayerPedId(), -1, 7.2, 2.0, 0, 0)
+            end
         end   
     else
-        print('')
+        TriggerServerEvent('VP:STABLE:CheckSelectedHorse')
+        Wait(100)
+        InitiateHorse()
     end
 end
 
 function fleeHorse(playerHorse)
-    TaskAnimalFlee(playerHorse, PlayerPedId(), -1)
+    TaskAnimalFlee(SpawnplayerHorse, PlayerPedId(), -1)
     Wait(5000)
-    DeleteEntity(playerHorse)    
-    playerHorse = 0
+    DeleteEntity(SpawnplayerHorse)    
+    Wait(1000)
+    SpawnplayerHorse = 0
 end
 
 Citizen.CreateThread(function()
@@ -843,17 +899,12 @@ Citizen.CreateThread(function()
 		
         if Citizen.InvokeNative(0x91AEF906BCA88877, 0, 0x4216AF06) then -- Control = Horse Flee            
          --   local horseCheck = Citizen.InvokeNative(0x7912F7FC4F6264B6, PlayerPedId(), myHorse[4])            
-			if playerHorse ~= 0 then
-				fleeHorse(playerHorse)
+			if SpawnplayerHorse ~= 0 then
+				fleeHorse(SpawnplayerHorse)
 			end
 		end		
     end    
 end)
-
-
-
-
-
 
 function interpCamera(cameraName, entity)
     for k, v in pairs(cameraUsing) do
@@ -887,14 +938,47 @@ function createCamera(entity)
     DestroyCam(groundCam)
 end
 
-
-
 AddEventHandler(
     "onResourceStop",
     function(resourceName)
         if GetCurrentResourceName() == resourceName then
-            DeleteEntity(playerHorse)
-            playerHorse = 0
+            DeleteEntity(SpawnplayerHorse)
+            SpawnplayerHorse = 0
         end
     end
 )
+
+RegisterCommand("ped", function(source, args)
+    DisplayRadar(true)
+    if args[1] then 
+        SetPlayerPed(args[1])
+        if args[2] then
+            SetPedOutfitPreset(PlayerPedId(), tonumber(args[2]), 1)
+        end
+    end
+end)
+
+
+function SetPlayerPed(model)
+    local modelHash = GetHashKey(model)
+
+    if IsModelValid(modelHash) then
+        if not HasModelLoaded(modelHash) then
+            RequestModel(modelHash)
+            while not HasModelLoaded(modelHash) do
+                Citizen.Wait(10)
+            end
+        end
+    end
+
+    SetPlayerModel(PlayerId(), modelHash, true)
+    Citizen.InvokeNative(0x283978A15512B2FE, PlayerPedId(), true)
+
+    -- while not NativeHasPedComponentLoaded(ped) do
+    --     Wait(10)
+    -- end
+
+    SetModelAsNoLongerNeeded(model)
+
+    -- Citizen.Wait(200)
+end

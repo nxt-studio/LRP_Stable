@@ -125,10 +125,10 @@ window.addEventListener('message', function(event) {
                     </div>
                     <div class="collapsible-body col s12 panel item" id="${HorseID}">
                         <div class="col s6 panel-col item" onclick="SelectHorse(${HorseID})">
-                            <h6 class="grey-text title">Escolher</h6>
+                            <h6 class="grey-text title">Select</h6>
                         </div>
                         <div class="col s6 panel-col item" onclick="SellHorse(${HorseID})">
-                            <h6 class="grey-text title">Vender por $10</h6>
+                            <h6 class="grey-text title">Sell</h6>
                         </div>
                     </div>
                 </li> 
@@ -247,7 +247,12 @@ $(".input-number").on("change paste keyup", function() {
 
 });
 
-function buyHorse(Modelhor, price, isGold) {    
+function buyHorse(Modelhor, price, isGold) {        
+    $('#button-customization').addClass("disabled");
+    $('#page_myhorses .scroll-container .collapsible').html('');
+    $('#page_shop .scroll-container .collapsible').html('');
+    $("#creatormenu").fadeOut(500);
+
     if (isGold) {        
         $.post('http://LRP_Stable/BuyHorse', JSON.stringify({ ModelH: Modelhor, Gold: price, IsGold: isGold }));
     } else {
@@ -262,5 +267,11 @@ function SelectHorse(IdHorse) {
 
 
 function SellHorse(IdHorse) {    
-    $.post('http://LRP_Stable/sellHorse', JSON.stringify({ horseID: IdHorse }))    
+    $.post('http://LRP_Stable/sellHorse', JSON.stringify({ horseID: IdHorse }))
+
+    $('#button-customization').addClass("disabled");
+    $('#page_myhorses .scroll-container .collapsible').html('');
+    $('#page_shop .scroll-container .collapsible').html('');
+    $("#creatormenu").fadeOut(500);
+
 }
