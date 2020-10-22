@@ -176,8 +176,7 @@ AddEventHandler(
 
                 for k,v in pairs(Config.Horses) do
                     for models,values in pairs(v) do
-                        if models ~= "name" then
-                            print(modelHorse, models)                            
+                        if models ~= "name" then                
                             if models == modelHorse then
                                 user.addMoney(tonumber(values[3]*0.6))
                                 print('horse sold')
