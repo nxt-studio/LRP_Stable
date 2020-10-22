@@ -12,7 +12,7 @@ AddEventHandler(
             local charid = user.getSessionVar("charid")
             local id = idhorse
             MySQL.Async.execute("UPDATE horses SET `components`='".. encodedComponents .."' WHERE `identifier`=@identifier AND `id`=@id", {identifier = identifier, id = id}, function(done)
-                TriggerClientEvent("VP:STABLE:UpdadeHOrseComponents", _source, MyHorse_entity, components)
+                TriggerClientEvent("VP:STABLE:UpdadeHorseComponents", _source, MyHorse_entity, components)
             end)
         end)       
     end
@@ -165,27 +165,27 @@ AddEventHandler(
             local charid = user.getSessionVar("charid")
 
             MySQL.Async.fetchAll('SELECT * FROM horses WHERE `identifier`=@identifier AND `charid`=@charid;', {identifier = identifier, charid = charid}, function(horses)
-                for i = 1, #horses do     
-                    if tonumber(horses[i].id) == tonumber(id) then             
+
+                for i = 1, #horses do
+                   if tonumber(horses[i].id) == tonumber(id) then
                         modelHorse = horses[i].model
                         MySQL.Async.fetchAll('DELETE FROM horses WHERE `identifier`=@identifier AND `charid`=@charid AND`id`=@id;', {identifier = identifier, charid = charid,  id = id}, function(result)
-                        end)
-
-                        for i, table in pairs(Config.Horses) do
-                            for modelH, horseData in pairs(table) do
-                                if modelH == horses[i].model then
-                                    print(tonumber(horseData[3]*0.6))          
-                                    user.addMoney(tonumber(horseData[3]*0.6))
-                                    print('Horse Sold')
-                                    sold = false
-                                end
-                            end
-                        end                   
-                    else
-                        print('error')
+                        end)                   
                     end
                 end
-                --    TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Horse sold')
+
+                for k,v in pairs(Config.Horses) do
+                    for models,values in pairs(v) do
+                        if models ~= "name" then
+                            print(modelHorse, models)                            
+                            if models == modelHorse then
+                                user.addMoney(tonumber(values[3]*0.6))
+                                print('horse sold')
+                                -- TriggerClientEvent('VP:NOTIFY:Simple', _source, 'Horse sold')
+                            end
+                        end
+                    end
+                end
             end)                           
         end)
     end

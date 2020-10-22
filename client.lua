@@ -579,8 +579,8 @@ RegisterNUICallback(
     end
 )
 
-RegisterNetEvent('VP:STABLE:UpdadeHOrseComponents')
-AddEventHandler('VP:STABLE:UpdadeHOrseComponents', function(horseEntity, components)
+RegisterNetEvent('VP:STABLE:UpdadeHorseComponents')
+AddEventHandler('VP:STABLE:UpdadeHorseComponents', function(horseEntity, components)
     for _, value in pairs(components) do
         NativeSetPedComponentEnabled(horseEntity, value)
     end
@@ -842,7 +842,7 @@ function InitiateHorse(atCoords)
 
     --CreatePrompts(PromptGetGroupIdForTargetEntity(entity))
 
-    if horseComponents ~= nil then
+    if horseComponents ~= nil and horseComponents ~= "0" then
         for _, componentHash in pairs(json.decode(horseComponents)) do
             NativeSetPedComponentEnabled(entity, tonumber(componentHash))
         end
