@@ -1,5 +1,15 @@
 local SelectedHorseId = {}
 
+Citizen.CreateThread(function()
+	if GetCurrentResourceName() ~= "LRP_Stable" then
+		print("^1=====================================")
+		print("^1SCRIPT NAME OTHER THAN ORIGINAL")
+		print("^1YOU SHOULD STOP SCRIPT")
+		print("^1CHANGE NAME TO: ^2LRP_Stable^1")
+		print("^1=====================================^0")
+	end
+end)
+
 RegisterNetEvent("VP:STABLE:UpdateHorseComponents")
 AddEventHandler(
     "VP:STABLE:UpdateHorseComponents",
