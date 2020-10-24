@@ -11,9 +11,11 @@ You can buy for Dollar or Gold
 
 ## Requirements
 [RedEM:RP ](https://github.com/RedEM-RP/redem_roleplay)
+
 [RedEM:RP Identity ](https://github.com/RedEM-RP/redemrp_identity/)
+
 [RedEM:RP Respawn ](https://github.com/RedEM-RP/redemrp_respawn/)
-[pNotify ](https://github.com/Nick78111/pNotify)
+
 
 ## Preview
 
