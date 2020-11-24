@@ -504,7 +504,7 @@ RegisterNUICallback(
                 end
             end
 
-            SetPlayerModel(PlayerId(), showroomHorse_entity, 1)
+            SetPlayerModel(showroomHorse_entity, horseModel, 1)
             Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true);
             SetModelAsNoLongerNeeded(showroomHorse_entity)
             showroomHorse_model = horseModel
