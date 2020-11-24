@@ -489,17 +489,27 @@ RegisterNUICallback(
             return
         end
 
-
-        if showroomHorse_entity ~= nil then
-            DeleteEntity(showroomHorse_entity)
-            showroomHorse_entity = nil
-        end
-
         if MyHorse_entity ~= nil then
             DeleteEntity(MyHorse_entity)
             MyHorse_entity = nil
         end
 
+        if showroomHorse_entity ~= nil then
+            local modelHash = GetHashKey(horseModel)
+            
+            if not HasModelLoaded(modelHash) then
+                RequestModel(modelHash)
+                while not HasModelLoaded(modelHash) do
+                    Citizen.Wait(10)
+                end
+            end
+
+            SetPlayerModel(PlayerId(), showroomHorse_entity, 1)
+            Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true);
+            SetModelAsNoLongerNeeded(showroomHorse_entity)
+            showroomHorse_model = horseModel
+            return
+        end
 
         showroomHorse_model = horseModel
 
