@@ -900,6 +900,17 @@ function fleeHorse(playerHorse)
 end
 
 Citizen.CreateThread(function()
+	while true do
+		local getHorseMood = Citizen.InvokeNative(0x42688E94E96FD9B4, 3, 0)
+		if getHorseMood >= 0.60 then
+		Citizen.InvokeNative(0x06D26A96CA1BCA75, SpawnplayerHorse, 3, PlayerPedId())
+		Citizen.InvokeNative(0xA1EB5D029E0191D3, SpawnplayerHorse, 3, 0.99)
+		Citizen.Wait(30000)
+		end
+	end
+end)
+
+Citizen.CreateThread(function()
     while true do
         Citizen.Wait(1)
         if Citizen.InvokeNative(0x91AEF906BCA88877, 0, 0x24978A28) then -- Control =  H
