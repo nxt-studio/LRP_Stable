@@ -493,33 +493,24 @@ RegisterNUICallback(
             DeleteEntity(MyHorse_entity)
             MyHorse_entity = nil
         end
-
-        if showroomHorse_entity ~= nil then
-            local modelHash = GetHashKey(horseModel)
-            
-            if not HasModelLoaded(modelHash) then
-                RequestModel(modelHash)
-                while not HasModelLoaded(modelHash) do
-                    Citizen.Wait(10)
-                end
-            end
-
-            SetPlayerModel(showroomHorse_entity, horseModel, 1)
-            Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true);
-            SetModelAsNoLongerNeeded(showroomHorse_entity)
-            showroomHorse_model = horseModel
-            return
-        end
-
-        showroomHorse_model = horseModel
+		
+	showroomHorse_model = horseModel
 
         local modelHash = GetHashKey(showroomHorse_model)
-
-        if not HasModelLoaded(modelHash) then
+		
+	if not HasModelLoaded(modelHash) then
             RequestModel(modelHash)
             while not HasModelLoaded(modelHash) do
                 Citizen.Wait(10)
             end
+        end
+
+        if showroomHorse_entity ~= nil then    
+            SetPlayerModel(showroomHorse_entity, modelHash, 1)
+            Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true);
+            SetModelAsNoLongerNeeded(showroomHorse_entity)
+            showroomHorse_model = horseModel
+            return
         end
 
         showroomHorse_entity = CreatePed(modelHash, SpawnPoint.x, SpawnPoint.y, SpawnPoint.z - 0.98, SpawnPoint.h, false, 0)
@@ -528,7 +519,7 @@ RegisterNUICallback(
         NetworkSetEntityInvisibleToNetwork(showroomHorse_entity, true)
         SetVehicleHasBeenOwnedByPlayer(showroomHorse_entity, true)
         -- SetModelAsNoLongerNeeded(modelHash)
-
+		
         interpCamera("Horse", showroomHorse_entity)
     end
 )
@@ -539,6 +530,7 @@ RegisterNUICallback(
     function(data)
         local horseModel = data.horseModel
         IdMyHorse = data.IdHorse
+		
         if showroomHorse_model == horseModel then
             return
         end
@@ -901,7 +893,7 @@ end
 
 Citizen.CreateThread(function()
 	while true do
-		local getHorseMood = Citizen.InvokeNative(0x42688E94E96FD9B4, 3, 0)
+		local getHorseMood = Citizen.InvokeNative(0x42688E94E96FD9B4, SpawnplayerHorse, 3, 0, Citizen.ResultAsFloat())
 		if getHorseMood >= 0.60 then
 		Citizen.InvokeNative(0x06D26A96CA1BCA75, SpawnplayerHorse, 3, PlayerPedId())
 		Citizen.InvokeNative(0xA1EB5D029E0191D3, SpawnplayerHorse, 3, 0.99)
