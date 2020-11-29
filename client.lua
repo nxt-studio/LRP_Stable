@@ -897,8 +897,8 @@ Citizen.CreateThread(function()
 		if getHorseMood >= 0.60 then
 		Citizen.InvokeNative(0x06D26A96CA1BCA75, SpawnplayerHorse, 3, PlayerPedId())
 		Citizen.InvokeNative(0xA1EB5D029E0191D3, SpawnplayerHorse, 3, 0.99)
-		Citizen.Wait(30000)
 		end
+		Citizen.Wait(30000)
 	end
 end)
 
