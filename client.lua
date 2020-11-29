@@ -969,37 +969,3 @@ AddEventHandler(
     end
 )
 
-RegisterCommand("ped", function(source, args)
-    DisplayRadar(true)
-    if args[1] then 
-        SetPlayerPed(args[1])
-        if args[2] then
-            SetPedOutfitPreset(PlayerPedId(), tonumber(args[2]), 1)
-        end
-    end
-end)
-
-
-function SetPlayerPed(model)
-    local modelHash = GetHashKey(model)
-
-    if IsModelValid(modelHash) then
-        if not HasModelLoaded(modelHash) then
-            RequestModel(modelHash)
-            while not HasModelLoaded(modelHash) do
-                Citizen.Wait(10)
-            end
-        end
-    end
-
-    SetPlayerModel(PlayerId(), modelHash, true)
-    Citizen.InvokeNative(0x283978A15512B2FE, PlayerPedId(), true)
-
-    -- while not NativeHasPedComponentLoaded(ped) do
-    --     Wait(10)
-    -- end
-
-    SetModelAsNoLongerNeeded(model)
-
-    -- Citizen.Wait(200)
-end
