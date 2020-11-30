@@ -492,32 +492,33 @@ RegisterNUICallback(
         if MyHorse_entity ~= nil then
             DeleteEntity(MyHorse_entity)
             MyHorse_entity = nil
-        end
-		
-	showroomHorse_model = horseModel
+        end		
 
-        local modelHash = GetHashKey(showroomHorse_model)
-		
-	if not HasModelLoaded(modelHash) then
-            RequestModel(modelHash)
-            while not HasModelLoaded(modelHash) do
-                Citizen.Wait(10)
+        local modelHash = GetHashKey(horseModel)
+
+        if IsModelValid(modelHash) then
+            if not HasModelLoaded(modelHash) then
+                RequestModel(modelHash)
+                while not HasModelLoaded(modelHash) do
+                    Citizen.Wait(10)
+                end
             end
-        end
+        end    
 
         if showroomHorse_entity ~= nil then    
-            SetPlayerModel(showroomHorse_entity, modelHash, 1)
-            Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true);
-            SetModelAsNoLongerNeeded(showroomHorse_entity)
-            showroomHorse_model = horseModel
-            return
+            DeleteEntity(showroomHorse_entity)
+            showroomHorse_entity = nil
         end
+
+        showroomHorse_model = horseModel
 
         showroomHorse_entity = CreatePed(modelHash, SpawnPoint.x, SpawnPoint.y, SpawnPoint.z - 0.98, SpawnPoint.h, false, 0)
         Citizen.InvokeNative(0x283978A15512B2FE, showroomHorse_entity, true)
         Citizen.InvokeNative(0x58A850EAEE20FAA3, showroomHorse_entity)
+
         NetworkSetEntityInvisibleToNetwork(showroomHorse_entity, true)
         SetVehicleHasBeenOwnedByPlayer(showroomHorse_entity, true)
+
         -- SetModelAsNoLongerNeeded(modelHash)
 		
         interpCamera("Horse", showroomHorse_entity)
